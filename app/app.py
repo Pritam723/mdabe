@@ -7,7 +7,7 @@ from supportingFunctions import *
 from meterUtility import MeterUtil
 from meterComponents import separateComponentsTillLastMeter
 import json
-from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationData
+from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationDataAllMeter, compareConfigurationDataSelectedMeter
 from dbConnectorUtility import DBConnectorUtil
 
 app = Flask(__name__)
@@ -125,7 +125,10 @@ def compareConfigurations():
 
     print(data)
 
-    return compareConfigurationData(data['prevId'], data['currId'], data['configType'])
+    if(data['selectedMeter'] == "Any") :
+        return compareConfigurationDataAllMeter(data['prevId'], data['currId'], data['configType'])
+    else :
+        return compareConfigurationDataSelectedMeter(data['prevId'], data['currId'], data['configType'], data['selectedMeter'])
 
 #############################################################################################################################################################
 

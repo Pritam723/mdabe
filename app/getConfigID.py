@@ -1,6 +1,6 @@
 from dbConnectorUtility import DBConnectorUtil
 from datetime import datetime
-from MeterUtil import MeterUtil
+from meterUtility import MeterUtil
 from supportingFunctions import getDifferenceDicts, getDifferenceListOfDict
 
 def getMasterDataDocumentId(dateStr, configPath) :
