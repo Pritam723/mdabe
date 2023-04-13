@@ -25,7 +25,7 @@ def isParticularMeterDifferentInConfigurations(prevId, currId, configType, selec
     configurations, it may happen that the selectedMeter is not changed in those configurations.'''
 
     if(configType == "fictcfgData") :
-        print("Checking fictcfgData for " + selectedMeter)
+        # print("Checking fictcfgData for " + selectedMeter)
         changeInfoInDictionaryForm = getDifferenceDicts(getConfigDataByID(prevId, configType), getConfigDataByID(currId, configType))
         
         # print("Printing for Prev ID " + str(prevId))
@@ -49,16 +49,16 @@ def isParticularMeterDifferentInConfigurations(prevId, currId, configType, selec
         
         for item in changes['Deleted'] :
             if(item['Loc_Id'] == selectedMeter) :
-                print("There is mention of " + selectedMeter + " in getDifferenceListOfDict deleted for " + str(prevId) + " and " + str(currId))
+                # print("There is mention of " + selectedMeter + " in getDifferenceListOfDict deleted for " + str(prevId) + " and " + str(currId))
                 return True
         
 
         for item in changes['Added'] :
             if(item['Loc_Id'] == selectedMeter) :
-                print("There is mention of " + selectedMeter + " in getDifferenceListOfDict added for " + str(prevId) + " and " + str(currId))
+                # print("There is mention of " + selectedMeter + " in getDifferenceListOfDict added for " + str(prevId) + " and " + str(currId))
                 return True
         
-        print("There is no mention of " + selectedMeter + " in getDifferenceListOfDict for " + str(prevId) + " and " + str(currId))
+        # print("There is no mention of " + selectedMeter + " in getDifferenceListOfDict for " + str(prevId) + " and " + str(currId))
 
         return False
 
@@ -119,8 +119,8 @@ def getConfigDataByID(_id, configType) :
 
 def compareConfigurationDataAllMeter(prevId, currId, configType) :
     
-    print(f"comparing {prevId} vs {currId} for {configType}")
-    print("Called compareConfigurationDataAllMeter")
+    # print(f"comparing {prevId} vs {currId} for {configType}")
+    # print("Called compareConfigurationDataAllMeter")
 
     # print(getConfigDataByID(prevId, "masterData"))
     # print(getConfigDataByID(currId, "masterData"))
@@ -141,14 +141,15 @@ def compareConfigurationDataAllMeter(prevId, currId, configType) :
 
     else :
         changes = getDifferenceListOfDict(getConfigDataByID(prevId, configType), getConfigDataByID(currId, configType))
-        print(changes)
-    return json.dumps(changes)
+        # print(changes)
+    # return json.dumps(changes)
+    return changes
 
 
 def compareConfigurationDataSelectedMeter(prevId, currId, configType, selectedMeter) :
     
-    print(f"comparing {prevId} vs {currId} for {configType}")
-    print("Called compareConfigurationDataSelectedMeter for " + selectedMeter)
+    # print(f"comparing {prevId} vs {currId} for {configType}")
+    # print("Called compareConfigurationDataSelectedMeter for " + selectedMeter)
 
     # print(getConfigDataByID(prevId, "masterData"))
     # print(getConfigDataByID(currId, "masterData"))
@@ -182,7 +183,8 @@ def compareConfigurationDataSelectedMeter(prevId, currId, configType, selectedMe
 
         changesSelectedMeter['Added'] = [item for item in changes['Added'] if item['Loc_Id'] == selectedMeter]
     
-    return json.dumps(changesSelectedMeter)
+    # return json.dumps(changesSelectedMeter)
+    return changesSelectedMeter
 
 
 def getConfigDataChangeHistoryForAllMeters(configType, startDateTime, endDateTime) :
@@ -270,8 +272,8 @@ def getConfigDataChangeHistoryForAllMeters(configType, startDateTime, endDateTim
             item['dateInfo'] = f"{configInfo[configType]['name']} is same from date {item['startDate'].strftime('%d-%m-%Y')} to {item['endDate'].strftime('%d-%m-%Y')}"
 
     
-    # return changeInfo
-    return json.dumps(changeInfo, cls=DateTimeEncoder)
+    return changeInfo
+    # return json.dumps(changeInfo, cls=DateTimeEncoder)
 
 
 
@@ -322,11 +324,11 @@ def getConfigDataChangeHistoryForSelectedMeter(configType, selectedMeter ,startD
         if(currentDateConfig[id_to_be_compared] != previousDateConfig[id_to_be_compared] and currentDateConfig[id_to_be_compared] != minimizeCheckingConfig[id_to_be_compared]) :
             # But there is still possibility that selectedMeter does not change here actually.
             # For a particular meter we need to check whether 'isParticularMeterDifferentInConfigurations' too.
-            print("I got a different config")
-            print("previous config ID is " + str(previousDateConfig[id_to_be_compared]))
-            print("current config ID is " + str(currentDateConfig[id_to_be_compared]))
+            # print("I got a different config")
+            # print("previous config ID is " + str(previousDateConfig[id_to_be_compared]))
+            # print("current config ID is " + str(currentDateConfig[id_to_be_compared]))
 
-            print("Checking whether " + selectedMeter + " was changed in these 2 configs")
+            # print("Checking whether " + selectedMeter + " was changed in these 2 configs")
             # print(isParticularMeterDifferentInConfigurations(previousDateConfig[id_to_be_compared], currentDateConfig[id_to_be_compared],configType, selectedMeter))
 
             if(not isParticularMeterDifferentInConfigurations(previousDateConfig[id_to_be_compared], currentDateConfig[id_to_be_compared],configType, selectedMeter)) :
@@ -379,15 +381,15 @@ def getConfigDataChangeHistoryForSelectedMeter(configType, selectedMeter ,startD
             item['dateInfo'] = f"Configuration for {selectedMeter} is same from date {item['startDate'].strftime('%d-%m-%Y')} to {item['endDate'].strftime('%d-%m-%Y')}"
 
     
-    # return changeInfo
-    return json.dumps(changeInfo, cls=DateTimeEncoder)
+    return changeInfo
+    # return json.dumps(changeInfo, cls=DateTimeEncoder)
 
 
 
 def getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime) :
     if(selectedMeter == "Any") :
-        print("Called for ALL Meters")
+        # print("Called for ALL Meters")
         return getConfigDataChangeHistoryForAllMeters(configType,startDateTime,endDateTime)
     else :
-        print("Called for particular meter " + selectedMeter)
+        # print("Called for particular meter " + selectedMeter)
         return getConfigDataChangeHistoryForSelectedMeter(configType,selectedMeter,startDateTime,endDateTime)

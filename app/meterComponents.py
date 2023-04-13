@@ -1,18 +1,28 @@
 from meterUtility import MeterUtil
+from configurationHistoryUtil import getConfigDataByID
+from dbConnectorUtility import DBConnectorUtil
 import re
 #################################################### Component Seperator Function ####################################################################
-def separateComponents(meterID, meterUtilObj) :
+def separateComponents(meterID, fictcfgDataID) :
     '''Component Seperator Function for next level'''
-
-
-    if(meterUtilObj.getMeterInfoById(meterID) is not None) :  # So it is a real meter
+    
+    allTimeRealMeterIDs_collectionObj = DBConnectorUtil(collection = 'allTimeRealMeterIDs').getCollectionObject()
+    allTimeFictMeterIDs_collectionObj = DBConnectorUtil(collection = 'allTimeFictMeterIDs').getCollectionObject()
+    
+    realMeterObj = allTimeRealMeterIDs_collectionObj.find_one({'name' : meterID}, {'_id' : 0, 'code' : 0})
+    fictMeterObj = allTimeFictMeterIDs_collectionObj.find_one({'name' : meterID}, {'_id' : 0, 'code' : 0})
+    
+    if(realMeterObj is not None) :  # So it is a real meter
         meterEquation = meterID
-    elif(meterUtilObj.getFictMeterInfoById(meterID) is not None): # So it is a Fict meter
-        meterEquation = meterUtilObj.getFictitiousMeterEqutation('('+ meterID +')')     # fictMeterDict['('+ meterID +')']
+    elif(fictMeterObj is not None): # So it is a Fict meter
+        
+        meterEquation = getConfigDataByID(fictcfgDataID,"fictcfgData").get(f'({meterID})')
+        
+        # Now it may happen that, meterID is in allTimeFictMeterIDs but for this 'fictcfgDataID', no entry exists.
+        if(meterEquation is None): return []
+    
     else : # No meter entry for this ID
         return []
-
-
 
     meterEquation = meterEquation.replace(' ','')
     meterEquation = meterEquation.replace(u'\xa0', u'') # Non breaking space.
@@ -24,10 +34,8 @@ def separateComponents(meterID, meterUtilObj) :
     # print(len(components))
     return components
 
-def separateComponentsTillLastMeter(meterID) :
+def separateComponentsTillLastMeter(meterID, fictcfgDataID) :
     '''Component Seperator Function till last level'''
-    
-    meterUtilObj = MeterUtil()
 
     equationSet = {}
     previous_components = set({meterID})
@@ -38,7 +46,8 @@ def separateComponentsTillLastMeter(meterID) :
         for previous_component in previous_components :
 
             try :
-                findEq = meterUtilObj.getFictitiousMeterEqutation(f'({previous_component})').strip()
+                # findEq = fictMeterDict[f'({previous_component})'].strip()
+                findEq = getConfigDataByID(fictcfgDataID,"fictcfgData")[f'({previous_component})'].strip()
                 # print(f'{previous_component} = {findEq}')
                 equationSet[previous_component] = findEq
 
@@ -46,7 +55,7 @@ def separateComponentsTillLastMeter(meterID) :
                 # Basically No entry is there for this ID. So most probably it is a Real Meter.
                 pass
 
-            separated_components = separateComponents(previous_component, meterUtilObj)
+            separated_components = separateComponents(previous_component, fictcfgDataID)
             next_components = next_components.union(separated_components)
 
         if(next_components == previous_components) :

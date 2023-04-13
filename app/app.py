@@ -9,6 +9,7 @@ from meterComponents import separateComponentsTillLastMeter
 import json
 from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationDataAllMeter, compareConfigurationDataSelectedMeter
 from dbConnectorUtility import DBConnectorUtil
+from componentwiseDataUtil import componentWiseData
 
 app = Flask(__name__)
 CORS(app)
@@ -25,6 +26,12 @@ def hello(name):
 
 #############################################################################################################################################################
 
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, z):
+        if isinstance(z, datetime):
+            return (str(z))
+        else:
+            return super().default(z)
 
 ################################################################ Fetching Meter Meta Data ###################################################################
 
@@ -55,7 +62,8 @@ def fetchMeterData(fetchBy):
     data = request.get_json()
     # print(data)
 
-    return fetchMeterDataByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy)
+    return json.dumps(fetchMeterDataByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy), cls=DateTimeEncoder)
+
 
 @app.route("/fetchMeterDataInExcel", methods=["GET","POST"])
 def fetchMeterDataInExcel():
@@ -69,7 +77,7 @@ def fetchMeterDataInExcel():
     selectedMeters = json.loads(data['selectedMeters'])
     fetchBy = data['fetchBy']
 
-    return fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, excelOnly = True)
+    return json.dumps(fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, excelOnly = True), cls=DateTimeEncoder)
 
 #############################################################################################################################################################
 
@@ -79,8 +87,7 @@ def fetchMeterDataInExcel():
 def fetchActiveReactive(fetchBy):
     data = request.get_json()
     # print(data)
-    
-    return fetchActiveReactiveByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy, energyType = data['energyType'])
+    return json.dumps(fetchActiveReactiveByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy, energyType = data['energyType']), cls=DateTimeEncoder)
 
 @app.route("/fetchActiveReactiveInExcel", methods=['GET', 'POST'])
 def fetchActiveReactiveInExcel():
@@ -95,7 +102,7 @@ def fetchActiveReactiveInExcel():
     fetchBy = data['fetchBy']
     energyType = data['energyType']
 
-    return fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetchBy, energyType, excelOnly = True)
+    return json.dumps(fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetchBy, energyType, excelOnly = True), cls=DateTimeEncoder)
 
 #############################################################################################################################################################
 
@@ -115,7 +122,7 @@ def getConfigurationChangeHistory():
     startDateTime = data['startDateTime']
     endDateTime = data['endDateTime'] # dd-mm-YYYY ex. '03-04-2023'.
 
-    return getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime)
+    return json.dumps(getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime), cls=DateTimeEncoder)
 
 @app.route("/compareConfigurations", methods=['GET', 'POST'])
 def compareConfigurations():
@@ -126,9 +133,51 @@ def compareConfigurations():
     print(data)
 
     if(data['selectedMeter'] == "Any") :
-        return compareConfigurationDataAllMeter(data['prevId'], data['currId'], data['configType'])
+        return json.dumps(compareConfigurationDataAllMeter(data['prevId'], data['currId'], data['configType']))
     else :
-        return compareConfigurationDataSelectedMeter(data['prevId'], data['currId'], data['configType'], data['selectedMeter'])
+        return json.dumps(compareConfigurationDataSelectedMeter(data['prevId'], data['currId'], data['configType'], data['selectedMeter']))
+ 
+#############################################################################################################################################################
+
+############################################# Component-wise Data Fetching ##################################################################################
+
+@app.route("/getComponentWiseData", methods=['GET', 'POST'])
+def getComponentWiseData():
+    # data = request.get_json()
+    # print(data)
+
+    # data = dict(request.form) 
+
+    # print(data) {'configType': 'masterData', 'selectedMeter': 'Any', 'startDateTime': '03-04-2023', 'endDateTime': '03-04-2023'}
+
+
+    configType = "fictcfgData"
+    selectedMeter = 'OP-92'
+    startDateTime = '27-12-2017'
+    endDateTime = '31-12-2018' # dd-mm-YYYY ex. '03-04-2023'.
+    componentType = "Recursive/ Level-1"
+
+    return componentWiseData(configType, selectedMeter, startDateTime, endDateTime, componentType)
+
 
 #############################################################################################################################################################
 
+############################################# Dummy Testing #################################################################################################
+
+@app.route("/getConfigurationChangeHistoryDummy", methods=['GET', 'POST'])
+def getConfigurationChangeHistoryDummy():
+    # data = request.get_json()
+    # print(data)
+
+    # data = dict(request.form) 
+
+    # print(data) {'configType': 'masterData', 'selectedMeter': 'Any', 'startDateTime': '03-04-2023', 'endDateTime': '03-04-2023'}
+    configInfo = {"masterData" : {"name" : "MASTER.DAT", "id" : "masterDataId", "data" : "realMeters"}, "fictdatData" : {"name" : "FICTMTRS.DAT", "id" : "fictdatDataId", "data" : "fictMeters"}, "fictcfgData" : {"name" : "FICTMTRS.CFG", "id" : "fictcfgDataID", "data" : "fictCFGs"} }
+
+
+    configType = "fictcfgData"
+    selectedMeter = 'OP-92'
+    startDateTime = '27-12-2017'
+    endDateTime = '31-12-2018' # dd-mm-YYYY ex. '03-04-2023'.
+
+    return json.dumps(getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime), cls=DateTimeEncoder)
