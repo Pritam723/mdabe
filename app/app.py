@@ -141,8 +141,8 @@ def compareConfigurations():
 
 ############################################# Component-wise Data Fetching ##################################################################################
 
-@app.route("/getComponentWiseData", methods=['GET', 'POST'])
-def getComponentWiseData():
+@app.route("/fetchComponentWiseData/<string:fetchBy>", methods=['GET', 'POST'])
+def fetchComponentWiseData(fetchBy):
     # data = request.get_json()
     # print(data)
 
@@ -152,12 +152,12 @@ def getComponentWiseData():
 
 
     configType = "fictcfgData"
-    selectedMeter = 'OP-92'
-    startDateTime = '27-12-2017'
-    endDateTime = '31-12-2018' # dd-mm-YYYY ex. '03-04-2023'.
+    selectedMeter = 'BM-99'
+    startDateTime = '01-01-2018'
+    endDateTime = '21-02-2018' # dd-mm-YYYY ex. '03-04-2023'.
     componentType = "Recursive/ Level-1"
 
-    return componentWiseData(configType, selectedMeter, startDateTime, endDateTime, componentType)
+    return json.dumps(componentWiseData(configType, selectedMeter, startDateTime, endDateTime, componentType), cls=DateTimeEncoder)
 
 
 #############################################################################################################################################################

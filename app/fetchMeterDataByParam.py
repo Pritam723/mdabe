@@ -14,6 +14,14 @@ class DateTimeEncoder(json.JSONEncoder):
 
 def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, excelOnly = False):
     
+    '''
+    Return Type: If we are fetching meter data for 3 days for meters FK-01 and FK-02, the return
+    object looks like {statrDateTime : datetimeObj, endDateTime : datetimeObj, xAxisData : [288 items separated by 15 minutes],
+    yAxisData : {'FK-01' : [288 Data Points], 'FK-02' : [288 Data Points]}}
+
+    '''
+
+
     startDateTimeObj = datetime.strptime(startDateTime,'%d-%m-%Y %H:%M:%S') # Used during Return Only.
     endDateTimeObj = datetime.strptime(endDateTime,'%d-%m-%Y %H:%M:%S')
     # See, whatever the startDateTime and endDateTime is, out fetchSameYearMeterData() can only work on one meterDataCollection at a time.
@@ -76,4 +84,3 @@ def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, e
 
     # return json.dumps(dataToReturn, cls=DateTimeEncoder)
     return dataToReturn
-
