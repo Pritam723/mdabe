@@ -5,7 +5,8 @@ from dbConnectorUtility import DBConnectorUtil
 from bson.objectid import ObjectId
 import json
 from bson import json_util
-
+from flask import send_file
+import pandas as pd
 
 configInfo = {"masterData" : {"name" : "MASTER.DAT", "id" : "masterDataId", "data" : "realMeters"}, "fictdatData" : {"name" : "FICTMTRS.DAT", "id" : "fictdatDataId", "data" : "fictMeters"}, "fictcfgData" : {"name" : "FICTMTRS.CFG", "id" : "fictcfgDataID", "data" : "fictCFGs"} }
 
@@ -69,7 +70,10 @@ def getConfigDataByDate(dateObj, configType) :
     ''' Returns the details of the configuration (masterData/ fictdatData/ fictcfgData) for the configType for the dateObj.
     For masterData and fictdatData we get list of Dicts. For fictcfgData we get dict only.'''    
     
-    datewiseConfig_collectionObj = DBConnectorUtil(collection = 'datewiseConfig').getCollectionObject()
+    datewiseConfig_DBConnectorObj = DBConnectorUtil(collection = 'datewiseConfig')
+    datewiseConfig_collectionObj = datewiseConfig_DBConnectorObj.getCollectionObject()
+
+
 
     resultCursor = datewiseConfig_collectionObj.aggregate([
         {
@@ -88,12 +92,14 @@ def getConfigDataByDate(dateObj, configType) :
     
     result = list(resultCursor)
     
+    datewiseConfig_DBConnectorObj.closeClient()
+
     if(len(result) == 0) : return [] # Because we need to calculate difference of List of Dicts.
     
     else : return result[0][configType][0][configInfo[configType]["data"]]  # result[0][masterData][0]['realMeters']
 
     
-def getConfigDataByID(_id, configType) :
+def getConfigDataByID(_id, configType,configData_collectionObj = None) :
     
     ''' Returns the details of the configuration (masterData/ fictdatData/ fictcfgData) for the configType and _id.
     For masterData and fictdatData we get list of Dicts. For fictcfgData we get dict only.'''    
@@ -106,7 +112,8 @@ def getConfigDataByID(_id, configType) :
 
     if(_id is None or _id == "None") : return emptyConfig # Because from the JS Frontend we may receive None as string.
         
-    configData_collectionObj = DBConnectorUtil(collection = configType).getCollectionObject()
+    if(configData_collectionObj is None) :
+        configData_collectionObj = DBConnectorUtil(collection = configType).getCollectionObject()
 
     resultCursor = configData_collectionObj.find({'_id' : ObjectId(_id)})
     
@@ -393,3 +400,50 @@ def getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDate
     else :
         # print("Called for particular meter " + selectedMeter)
         return getConfigDataChangeHistoryForSelectedMeter(configType,selectedMeter,startDateTime,endDateTime)
+
+
+def downloadConfigurationFile(configType, configId, startDate, endDate) :
+
+    data = getConfigDataByID(configId, configType)
+    fileName = configInfo[configType]['name']
+    if(len(data) == 0) :
+        with open(f'ReportGeneration/{fileName}', 'w') as f:
+            f.write(f"{fileName} for the date {startDate} to  {endDate}\n")
+            f.write(f"----------------------------------------------------\n\n")
+            f.write(f"There is no configuration for this date.")
+    else :
+        if(configType == 'fictcfgData') :
+            with open(f'ReportGeneration/{fileName}', 'w') as f:
+                f.write(f"{fileName} for the date {startDate} to  {endDate}\n")
+                f.write(f"----------------------------------------------------\n\n")
+
+                for index,key in enumerate(data):
+                    line = f"{index + 1}. {key} : {data[key]}"
+                    f.write(f"{line}\n\n")
+
+        elif(configType == 'masterData') :
+            with open(f'ReportGeneration/{fileName}', 'w') as f:
+                f.write(f"{fileName} for the date {startDate} to  {endDate}\n")
+                f.write(f"----------------------------------------------------\n\n")
+                
+                f.write(f"Loc_Id    Meter_No         CTR            PTR                    Place Of Installation\n\n")
+
+                for index,item in enumerate(data):
+                    line = f"{item['Loc_Id']}     {item['Meter_No']}        {item['ctr']}{' '* (15 - len(item['ctr']))}{item['ptr']}{' '* (23 - len(item['ptr']))}{item['Place_Of_Inst']}"
+                    f.write(f"{line}\n\n")
+        else :
+            with open(f'ReportGeneration/{fileName}', 'w') as f:
+                f.write(f"{fileName} for the date {startDate} to  {endDate}\n")
+                f.write(f"----------------------------------------------------\n\n")
+                
+                f.write(f"Loc_Id    Meter_No            Description\n\n")
+
+                for index,item in enumerate(data):
+                    line = f"{item['Loc_Id']}     {item['Meter_No']}{' ' * (20 - len(item['Meter_No']))}{item['Description']}"
+                    f.write(f"{line}\n\n")
+
+
+    return send_file(f'ReportGeneration/{fileName}', as_attachment=True, download_name=fileName)
+
+
+

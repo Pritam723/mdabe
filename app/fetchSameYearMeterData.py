@@ -7,7 +7,7 @@ from supportingFunctions import *
 from dbConnectorUtility import DBConnectorUtil
 import pandas as pd
 
-def fetchSameYearMeterData(year, startDateTime, endDateTime, selectedMeters, fetchBy, xAxisData, yAxisDataForAllMeters):
+def fetchSameYearMeterData(year, startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, xAxisData, yAxisDataForAllMeters):
     
     # myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     # mydb = myclient["meterDataArchival"]
@@ -55,6 +55,8 @@ def fetchSameYearMeterData(year, startDateTime, endDateTime, selectedMeters, fet
     for meterInfo in meterList :
         meter = meterInfo['name']
         
+        multiplicationFactor = getMultiplierValue(meter, multiplierData)
+        
         meterData = list(collectionObj.find( {fetchBy: meter, 'date': {'$lte': endDateObj, '$gte': startDateObj} }, {'_id' : 0}))
         # Remerber that meterData is sorted by meterID/ meterNO and then by Date. Because we have used compound index in our DB.
         # del meterData[3] # For testing Purpose Only.
@@ -89,7 +91,11 @@ def fetchSameYearMeterData(year, startDateTime, endDateTime, selectedMeters, fet
                 continue
 
             if(currDate == meterData[dataIndex]['date']) :
-                yAxisData = yAxisData + (meterData[dataIndex]['data'])[startBlock : endBlock + 1]
+
+                dataToAppend = (meterData[dataIndex]['data'])[startBlock : endBlock + 1]
+                dataToAppend = [item * multiplicationFactor for item in dataToAppend]
+                yAxisData = yAxisData + dataToAppend
+
                 dataIndex = dataIndex + 1
             else :
                 yAxisData = yAxisData + ([None]*96)[startBlock : endBlock + 1]

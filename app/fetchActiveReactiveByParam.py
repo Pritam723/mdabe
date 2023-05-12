@@ -12,7 +12,7 @@ class DateTimeEncoder(json.JSONEncoder):
         else:
             return super().default(z)
 
-def fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetchBy, energyType = "activeHigh", excelOnly = False):
+def fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, energyType = "activeHigh", excelOnly = False):
     
     startDateTimeObj = datetime.strptime(startDateTime,'%d-%m-%Y %H:%M:%S') # Used during Return Only.
     endDateTimeObj = datetime.strptime(endDateTime,'%d-%m-%Y %H:%M:%S')
@@ -48,7 +48,7 @@ def fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetch
         currentYear = datetime.strptime(dateInterval['startDateTime'], '%d-%m-%Y %H:%M:%S').year
         # dataForInterval =  fetchSameYearActiveReactive(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, fetchBy, xAxisData, yAxisDataForAllMeters)
 
-        fetchSameYearActiveReactive(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, fetchBy, xAxisData, yAxisDataForAllMeters, energyType)
+        fetchSameYearActiveReactive(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, multiplierData, fetchBy, xAxisData, yAxisDataForAllMeters, energyType)
         # See, only calling it is enough as Lists and Dictionaries are mutable in Python.
         # print(xAxisData)
 
@@ -65,6 +65,6 @@ def fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetch
 
     dataToReturn = {'startDateTime' : startDateTimeObj, 'endDateTime' : endDateTimeObj, 'xAxisData' : xAxisData, 'yAxisDataForAllMeters' : yAxisDataForAllMeters}
 
-    return json.dumps(dataToReturn, cls=DateTimeEncoder)
+    return dataToReturn
 
 

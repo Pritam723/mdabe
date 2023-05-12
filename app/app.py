@@ -7,7 +7,7 @@ from supportingFunctions import *
 from meterUtility import MeterUtil
 from meterComponents import separateComponentsTillLastMeter
 import json
-from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationDataAllMeter, compareConfigurationDataSelectedMeter
+from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationDataAllMeter, compareConfigurationDataSelectedMeter, downloadConfigurationFile
 from dbConnectorUtility import DBConnectorUtil
 from componentwiseDataUtil import componentWiseData
 
@@ -60,24 +60,26 @@ def getMetersListed(fetchBy):
 @app.route("/fetchMeterData/<string:fetchBy>", methods=['GET', 'POST'])
 def fetchMeterData(fetchBy):
     data = request.get_json()
-    # print(data)
+    print(data)
 
-    return json.dumps(fetchMeterDataByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy), cls=DateTimeEncoder)
+    return json.dumps(fetchMeterDataByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], multiplierData = data['multiplierData'], fetchBy = fetchBy), cls=DateTimeEncoder)
 
 
 @app.route("/fetchMeterDataInExcel", methods=["GET","POST"])
 def fetchMeterDataInExcel():
     # data = dict(request)
     data = dict(request.form) 
+    print(data)
     # print(type(request))
     # startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy
     # print(data)
     startDateTime = data['startDateTime']
     endDateTime = data['endDateTime']
     selectedMeters = json.loads(data['selectedMeters'])
+    multiplierData = json.loads(data['multiplierData'])
     fetchBy = data['fetchBy']
 
-    return json.dumps(fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, excelOnly = True), cls=DateTimeEncoder)
+    return fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, excelOnly = True)
 
 #############################################################################################################################################################
 
@@ -87,7 +89,7 @@ def fetchMeterDataInExcel():
 def fetchActiveReactive(fetchBy):
     data = request.get_json()
     # print(data)
-    return json.dumps(fetchActiveReactiveByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], fetchBy = fetchBy, energyType = data['energyType']), cls=DateTimeEncoder)
+    return json.dumps(fetchActiveReactiveByParam(startDateTime = data['startDateTime'], endDateTime = data['endDateTime'], selectedMeters = data['selectedMeters'], multiplierData = data['multiplierData'], fetchBy = fetchBy, energyType = data['energyType']), cls=DateTimeEncoder)
 
 @app.route("/fetchActiveReactiveInExcel", methods=['GET', 'POST'])
 def fetchActiveReactiveInExcel():
@@ -99,10 +101,11 @@ def fetchActiveReactiveInExcel():
     startDateTime = data['startDateTime']
     endDateTime = data['endDateTime']
     selectedMeters = json.loads(data['selectedMeters'])
+    multiplierData = json.loads(data['multiplierData'])
     fetchBy = data['fetchBy']
     energyType = data['energyType']
 
-    return json.dumps(fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, fetchBy, energyType, excelOnly = True), cls=DateTimeEncoder)
+    return fetchActiveReactiveByParam(startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, energyType, excelOnly = True)
 
 #############################################################################################################################################################
 
@@ -121,7 +124,7 @@ def getConfigurationChangeHistory():
     selectedMeter = data['selectedMeter']
     startDateTime = data['startDateTime']
     endDateTime = data['endDateTime'] # dd-mm-YYYY ex. '03-04-2023'.
-
+    
     return json.dumps(getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime), cls=DateTimeEncoder)
 
 @app.route("/compareConfigurations", methods=['GET', 'POST'])
@@ -136,6 +139,21 @@ def compareConfigurations():
         return json.dumps(compareConfigurationDataAllMeter(data['prevId'], data['currId'], data['configType']))
     else :
         return json.dumps(compareConfigurationDataSelectedMeter(data['prevId'], data['currId'], data['configType'], data['selectedMeter']))
+
+@app.route("/downloadConfiguration", methods=['GET', 'POST'])
+def downloadConfiguration():
+   
+    print("downloadConfiguration is called")
+    data = dict(request.form) 
+    print(data)
+
+    configType = data['configType']
+    configId = data['configId']
+    startDate = data['startDate'].split(" ")[0]  # "2023-04-21 00:00:00"
+    endDate = data['endDate'].split(" ")[0]
+    
+    return downloadConfigurationFile(configType, configId, startDate, endDate)
+
  
 #############################################################################################################################################################
 
@@ -143,8 +161,8 @@ def compareConfigurations():
 
 @app.route("/fetchComponentWiseData/<string:fetchBy>", methods=['GET', 'POST'])
 def fetchComponentWiseData(fetchBy):
-    # data = request.get_json()
-    # print(data)
+    data = request.get_json()
+    print(data)
 
     # data = dict(request.form) 
 
@@ -152,13 +170,35 @@ def fetchComponentWiseData(fetchBy):
 
 
     configType = "fictcfgData"
-    selectedMeter = 'BM-99'
-    startDateTime = '01-01-2018'
-    endDateTime = '21-02-2018' # dd-mm-YYYY ex. '03-04-2023'.
-    componentType = "Recursive/ Level-1"
+    selectedMeter = data['selectedMeters'][0]['name']
+    multiplierData = data['multiplierData']
+    startDateTime = data['startDateTime'].split(" ")[0]
+    endDateTime = data['endDateTime'].split(" ")[0] # dd-mm-YYYY ex. '03-04-2023'.
+    # componentType = "Recursive/Level-1"
+    componentType = data['componentType']
 
-    return json.dumps(componentWiseData(configType, selectedMeter, startDateTime, endDateTime, componentType), cls=DateTimeEncoder)
+    return json.dumps(componentWiseData(configType, selectedMeter,multiplierData, startDateTime, endDateTime, componentType, fetchBy), cls=DateTimeEncoder)
 
+@app.route("/fetchComponentWiseDataInExcel", methods=['GET', 'POST'])
+def fetchComponentWiseDataInExcel():
+    print("fetchComponentWiseDataInExcel is called")
+    data = dict(request.form) 
+    print(data)
+
+    # data = dict(request.form) 
+
+    # print(data) {'configType': 'masterData', 'selectedMeter': 'Any', 'startDateTime': '03-04-2023', 'endDateTime': '03-04-2023'}
+
+
+    configType = "fictcfgData"
+    selectedMeter = json.loads(data['selectedMeters'])[0]['name']
+    multiplierData = json.loads(data['multiplierData'])
+    startDateTime = data['startDateTime'].split(" ")[0]
+    endDateTime = data['endDateTime'].split(" ")[0] # dd-mm-YYYY ex. '03-04-2023'.
+    # componentType = "Recursive/Level-1"
+    componentType = data['componentType']
+
+    return componentWiseData(configType, selectedMeter, multiplierData, startDateTime, endDateTime, componentType, fetchBy = "meterID", excelOnly = True)
 
 #############################################################################################################################################################
 
@@ -178,6 +218,6 @@ def getConfigurationChangeHistoryDummy():
     configType = "fictcfgData"
     selectedMeter = 'OP-92'
     startDateTime = '27-12-2017'
-    endDateTime = '31-12-2018' # dd-mm-YYYY ex. '03-04-2023'.
+    endDateTime = '31-01-2021' # dd-mm-YYYY ex. '03-04-2023'.
 
     return json.dumps(getConfigDataChangeHistory(configType, selectedMeter, startDateTime, endDateTime), cls=DateTimeEncoder)

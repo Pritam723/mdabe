@@ -12,7 +12,7 @@ class DateTimeEncoder(json.JSONEncoder):
         else:
             return super().default(z)
 
-def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, excelOnly = False):
+def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, excelOnly = False):
     
     '''
     Return Type: If we are fetching meter data for 3 days for meters FK-01 and FK-02, the return
@@ -53,7 +53,7 @@ def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, fetchBy, e
         currentYear = datetime.strptime(dateInterval['startDateTime'], '%d-%m-%Y %H:%M:%S').year
         # dataForInterval =  fetchSameYearMeterData(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, fetchBy, xAxisData, yAxisDataForAllMeters)
 
-        fetchSameYearMeterData(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, fetchBy, xAxisData, yAxisDataForAllMeters)
+        fetchSameYearMeterData(currentYear, dateInterval['startDateTime'], dateInterval['endDateTime'], meterList, multiplierData, fetchBy, xAxisData, yAxisDataForAllMeters)
         # See, only calling it is enough as Lists and Dictionaries are mutable in Python.
         # print(xAxisData)
 

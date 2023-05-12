@@ -1,6 +1,29 @@
 from datetime import datetime, timedelta
 import re
 
+def isFloat(value):
+    if(value is None) :
+        return False
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+def changeToFloat(x) :
+    if(isFloat(x)) :
+        return float(x)
+    else :
+        return None
+    
+def getMultiplierValue(meter, multiplierData) :
+    value = multiplierData.get(meter)
+    if(isFloat(value)) :
+        return changeToFloat(value)
+    else :
+        return 1 # +1 is default Multiplier
+
+
 def datetime_range(startDateTimeObj, endDateTimeObj, offSetMinutes) :
     delta = timedelta(minutes=offSetMinutes)
     current = startDateTimeObj

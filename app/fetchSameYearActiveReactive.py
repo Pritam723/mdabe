@@ -7,7 +7,7 @@ from supportingFunctions import *
 from dbConnectorUtility import DBConnectorUtil
 import pandas as pd
 
-def fetchSameYearActiveReactive(year, startDateTime, endDateTime, selectedMeters, fetchBy, xAxisData, yAxisDataForAllMeters, energyType = "activeHigh"):
+def fetchSameYearActiveReactive(year, startDateTime, endDateTime, selectedMeters, multiplierData, fetchBy, xAxisData, yAxisDataForAllMeters, energyType = "activeHigh"):
     
     # myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     # mydb = myclient["meterDataArchival"]
@@ -57,6 +57,8 @@ def fetchSameYearActiveReactive(year, startDateTime, endDateTime, selectedMeters
     for meterInfo in meterList :
         meter = meterInfo['name']
         
+        multiplicationFactor = getMultiplierValue(meter, multiplierData)
+
         meterData = list(collectionObj.find( {fetchBy: meter, 'date': {'$lte': endDateObj, '$gte': startDateObj} }, {'_id' : 0, 'data' : 0})) # We do not need MWH data.
         # Remerber that meterData is sorted by meterID/ meterNO and then by Date. Because we have used compound index in our DB.
         # del meterData[3] # For testing Purpose Only.
@@ -92,7 +94,7 @@ def fetchSameYearActiveReactive(year, startDateTime, endDateTime, selectedMeters
                 continue
 
             if(currDate == meterData[dataIndex]['date']) :
-                yAxisData.append(meterData[dataIndex][energyType])
+                yAxisData.append(meterData[dataIndex][energyType] * multiplicationFactor)
                 dataIndex = dataIndex + 1
             else :
                 yAxisData.append(None)
