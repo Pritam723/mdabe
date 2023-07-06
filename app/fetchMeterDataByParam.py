@@ -83,4 +83,6 @@ def fetchMeterDataByParam(startDateTime, endDateTime, selectedMeters, multiplier
     dataToReturn = {'startDateTime' : startDateTimeObj, 'endDateTime' : endDateTimeObj, 'xAxisData' : xAxisData, 'yAxisDataForAllMeters' : yAxisDataForAllMeters}
 
     # return json.dumps(dataToReturn, cls=DateTimeEncoder)
+
+    # print(dataToReturn)
     return dataToReturn

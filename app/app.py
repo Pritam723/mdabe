@@ -10,8 +10,15 @@ import json
 from configurationHistoryUtil import getConfigDataChangeHistory, compareConfigurationDataAllMeter, compareConfigurationDataSelectedMeter, downloadConfigurationFile
 from dbConnectorUtility import DBConnectorUtil
 from componentwiseDataUtil import componentWiseData
+from templateWiseDataUtil import templateWiseData
+import pandas as pd
+import os
+
+UPLOAD_FOLDER = 'ConfigurationFiles'
+ALLOWED_EXTENSIONS = {'xlsx'}
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
 
 ################################################################ Testing Purpose #############################################################################
@@ -201,6 +208,91 @@ def fetchComponentWiseDataInExcel():
     return componentWiseData(configType, selectedMeter, multiplierData, startDateTime, endDateTime, componentType, fetchBy = "meterID", excelOnly = True)
 
 #############################################################################################################################################################
+
+############################################# Template-wise Data Fetching ###################################################################################
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/changeTemplateConfiguration" , methods=['GET','POST'])
+def changeTemplateConfiguration():
+    # print("Here")
+    # print(request)
+    # print(request.files)
+    templateFile = request.files['file']
+
+    if templateFile and allowed_file(templateFile.filename):
+        templateFile.save(os.path.join(app.config['UPLOAD_FOLDER'], 'TemplatesConfiguration.xlsx'))
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+    return json.dumps({'success':False}), 500, {'ContentType':'application/json'}
+
+@app.route("/downloadTemplateConfiguration" , methods=['GET','POST'])
+def downloadTemplateConfiguration():
+    return send_file('ConfigurationFiles/TemplatesConfiguration.xlsx', as_attachment=True, download_name="TemplatesConfiguration.xlsx")
+
+
+@app.route("/getTemplateNames" , methods=['GET'])
+def getTemplateNames():
+
+    df = pd.read_excel('ConfigurationFiles/TemplatesConfiguration.xlsx', None)
+    sheet_names = df.keys()
+    templates = []
+    for sheet_name in sheet_names :
+        templates.append({'name' : sheet_name, 'code' : sheet_name, 'value' : sheet_name})
+
+    # equationDetails = []
+
+
+    # for sheet_name in sheet_names :
+    # #     print(sheet_name)
+    #     equationDetail = {'Template' : sheet_name, 'EquationDetails' : []}
+    #     data = pd.read_excel('ConfigurationFiles/TemplatesConfiguration.xlsx', sheet_name=sheet_name)
+    #     for index, row in data.iterrows():
+    #         equationDetail['EquationDetails'].append({"Name" : row["Statistics"],"Equation" : row["Equation"]})
+            
+    #     equationDetails.append(equationDetail)
+
+    # return json.dumps(equationDetails)
+    return json.dumps(templates)
+
+
+@app.route("/fetchTemplateWiseData/<string:fetchBy>", methods=['GET', 'POST'])
+def fetchTemplateWiseData(fetchBy):
+    data = request.get_json()
+    print(data)
+
+    # data = dict(request.form) 
+
+    # print(data) {'configType': 'masterData', 'selectedMeter': 'Any', 'startDateTime': '03-04-2023', 'endDateTime': '03-04-2023'}
+
+
+    selectedTemplate = data['selectedMeters'][0]
+    startDateTime = data['startDateTime'].split(" ")[0]
+    endDateTime = data['endDateTime'].split(" ")[0] # dd-mm-YYYY ex. '03-04-2023'.
+
+    return json.dumps(templateWiseData(selectedTemplate, startDateTime, endDateTime), cls=DateTimeEncoder)
+
+@app.route("/fetchTemplateDataInExcel", methods=['GET', 'POST'])
+def fetchTemplateDataInExcel():
+    print("fetchTemplateDataInExcel is called")
+    data = dict(request.form) 
+    print(data)
+
+    # data = dict(request.form) 
+
+    # print(data) {'configType': 'masterData', 'selectedMeter': 'Any', 'startDateTime': '03-04-2023', 'endDateTime': '03-04-2023'}
+
+    selectedTemplate = json.loads(data['selectedMeters'])[0]
+    startDateTime = data['startDateTime'].split(" ")[0]
+    endDateTime = data['endDateTime'].split(" ")[0] # dd-mm-YYYY ex. '03-04-2023'.
+
+    return templateWiseData(selectedTemplate, startDateTime, endDateTime, excelOnly = True)
+
+
+#############################################################################################################################################################
+
 
 ############################################# Dummy Testing #################################################################################################
 
